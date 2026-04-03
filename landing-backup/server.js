@@ -45,12 +45,7 @@ Respond to emotions with empathy. Match the caller's energy and tone.`;
 const GEMINI_MODEL = 'models/gemini-2.5-flash-native-audio-latest';
 const GEMINI_WS_URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
 
-function startGeminiSession(socket, sessionConfig = {}) {
-  const voice = sessionConfig.voice || 'Puck';
-  const basePrompt = sessionConfig.system_prompt || SYSTEM_INSTRUCTIONS;
-  const dataContext = sessionConfig.data_context || '';
-  const fullPrompt = dataContext ? `${basePrompt}\n\n---\nCONTEXT DATA:\n${dataContext}` : basePrompt;
-
+function startGeminiSession(socket) {
   const ws = new WebSocket(GEMINI_WS_URL);
   ws._timing = { lastAudioSentAt: 0, firstAudioResponseAt: 0 };
 
@@ -63,7 +58,7 @@ function startGeminiSession(socket, sessionConfig = {}) {
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voice },
+              prebuiltVoiceConfig: { voiceName: 'Puck' },
             },
           },
           thinkingConfig: {
@@ -71,7 +66,7 @@ function startGeminiSession(socket, sessionConfig = {}) {
           },
         },
         systemInstruction: {
-          parts: [{ text: fullPrompt }],
+          parts: [{ text: SYSTEM_INSTRUCTIONS }],
         },
         realtimeInputConfig: {
           automaticActivityDetection: {
@@ -277,17 +272,12 @@ io.on('connection', (socket) => {
   let providerWs = null;
   console.log(`[${socket.id}] Client connected (provider: ${PROVIDER})`);
 
-  socket.on('start-session', (config) => {
-    // config may be: { model, voice, system_prompt, data_context } or undefined (landing page)
+  socket.on('start-session', () => {
     if (providerWs) { providerWs.close(); providerWs = null; }
 
     console.log(`[${socket.id}] Starting ${PROVIDER} session`);
-    const sessionConfig = config && typeof config === 'object' ? config : {};
-    if (PROVIDER === 'gemini' && sessionConfig.model) {
-      console.log(`[${socket.id}] Client requested model (ignored, using ${GEMINI_MODEL}):`, sessionConfig.model);
-    }
     providerWs = PROVIDER === 'gemini'
-      ? startGeminiSession(socket, sessionConfig)
+      ? startGeminiSession(socket)
       : startOpenAISession(socket);
   });
 
