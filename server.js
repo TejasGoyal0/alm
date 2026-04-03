@@ -1,4 +1,7 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
@@ -31,13 +34,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/health', (_req, res) => res.json({ status: 'ok', provider: PROVIDER }));
 app.get('/config', (_req, res) => res.json({ provider: PROVIDER }));
 
-const SYSTEM_INSTRUCTIONS = `You are a warm, natural conversational partner representing VoiceFlow AI.
-Speak like a real human — use casual fillers like "um", "you know", "well" occasionally.
-Keep responses concise (1-3 sentences). Be friendly, witty, and helpful.
-If asked about VoiceFlow AI, explain it's an ALM-powered voice platform that delivers
-human-like conversations with sub-500ms latency for customer service and sales.
-Otherwise, just be a great conversationalist. Never say you are an AI unless directly asked.
-Respond to emotions with empathy. Match the caller's energy and tone.`;
+const SYSTEM_INSTRUCTIONS = `You are a friendly conversational partner for VoiceFlow AI. Keep responses very short (1-2 sentences). Be warm and witty. Match the caller's energy. Never say you're AI unless asked.`;
 
 // ═══════════════════════════════════════════
 //  GEMINI MULTIMODAL LIVE API
@@ -78,8 +75,8 @@ function startGeminiSession(socket, sessionConfig = {}) {
             disabled: false,
             startOfSpeechSensitivity: 'START_SENSITIVITY_LOW',
             endOfSpeechSensitivity: 'END_SENSITIVITY_HIGH',
-            prefixPaddingMs: 20,
-            silenceDurationMs: 200,
+            prefixPaddingMs: 0,
+            silenceDurationMs: 100,
           },
         },
       },

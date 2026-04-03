@@ -835,27 +835,7 @@
       transcriptArea.scrollTop = transcriptArea.scrollHeight;
     }
 
-    function addLatencyBadge(latencyMs) {
-      transcriptArea.classList.remove('hidden');
-      const row = document.createElement('div');
-      row.className = 'flex items-center gap-2 text-left';
-      const colors = latencyMs < 500
-        ? { bg: 'rgba(16,185,129,0.10)', text: '#34d399', border: 'rgba(16,185,129,0.25)', glow: 'rgba(16,185,129,0.15)' }
-        : latencyMs < 1000
-        ? { bg: 'rgba(245,158,11,0.10)', text: '#fbbf24', border: 'rgba(245,158,11,0.25)', glow: 'rgba(245,158,11,0.15)' }
-        : { bg: 'rgba(239,68,68,0.10)', text: '#f87171', border: 'rgba(239,68,68,0.25)', glow: 'rgba(239,68,68,0.15)' };
-      const badge = document.createElement('span');
-      badge.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-mono font-bold';
-      badge.style.cssText = `background:${colors.bg};color:${colors.text};border:1px solid ${colors.border};box-shadow:0 0 12px ${colors.glow}`;
-      badge.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>${latencyMs}ms`;
-      const label = document.createElement('span');
-      label.className = 'text-[10px] text-slate-600';
-      label.textContent = 'response time';
-      row.appendChild(badge);
-      row.appendChild(label);
-      transcriptArea.appendChild(row);
-      transcriptArea.scrollTop = transcriptArea.scrollHeight;
-    }
+    function addLatencyBadge() {}
 
     function addTranscript(role, text) {
       transcriptArea.classList.remove('hidden');

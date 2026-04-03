@@ -34,6 +34,7 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { VoiceTestPanel } from "@/components/voice/voice-test-panel"
 import {
   MODELS,
   PROMPT_PRESETS,
@@ -213,6 +214,9 @@ export default function NewPipelinePage() {
     updateWizard({ system_prompt: p.prompt })
   }
 
+  const sanitize = (text: string) =>
+    text.replace(/\0/g, "").replace(/\\u0000/g, "")
+
   const saveAndDeploy = async () => {
     if (!wizardState.name.trim()) {
       setSaveError("Please enter a pipeline name.")
@@ -235,11 +239,13 @@ export default function NewPipelinePage() {
         .from("pipelines")
         .insert({
           user_id: user.id,
-          name: wizardState.name.trim(),
-          description: wizardState.description.trim() || null,
+          name: sanitize(wizardState.name.trim()),
+          description: wizardState.description.trim()
+            ? sanitize(wizardState.description.trim())
+            : null,
           model: wizardState.model,
           voice: wizardState.voice,
-          system_prompt: wizardState.system_prompt,
+          system_prompt: sanitize(wizardState.system_prompt),
           vad_sensitivity: wizardState.vad_sensitivity,
           silence_duration_ms: wizardState.silence_duration_ms,
           allow_interruptions: wizardState.allow_interruptions,
@@ -257,12 +263,16 @@ export default function NewPipelinePage() {
       const pipelineId = pipelineRow.id as string
 
       for (const ds of wizardState.data_sources) {
+        const cleanConfig: Record<string, unknown> = {}
+        for (const [k, v] of Object.entries(ds.config)) {
+          cleanConfig[k] = typeof v === "string" ? sanitize(v) : v
+        }
         const { error: dsError } = await supabase.from("data_sources").insert({
           pipeline_id: pipelineId,
           type: ds.type,
-          name: ds.name,
-          config: ds.config,
-          extracted_context: ds.extracted_context,
+          name: sanitize(ds.name),
+          config: cleanConfig,
+          extracted_context: sanitize(ds.extracted_context),
         })
         if (dsError) {
           setSaveError(dsError.message)
@@ -944,14 +954,14 @@ export default function NewPipelinePage() {
                         </div>
                       </CardContent>
                     </Card>
-                    <Button
-                      type="button"
-                      size="lg"
-                      className="h-12 w-full gap-2 border-0 bg-gradient-to-r from-indigo-600 to-violet-600 text-base text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-violet-500 dark:from-indigo-500 dark:to-violet-600 dark:shadow-indigo-950/40"
-                    >
-                      <Mic className="size-5" aria-hidden />
-                      Start Live Test
-                    </Button>
+                    <VoiceTestPanel
+                      voice={wizardState.voice}
+                      systemPrompt={wizardState.system_prompt}
+                      dataContext={wizardState.data_sources
+                        .map((ds) => ds.extracted_context)
+                        .filter(Boolean)
+                        .join("\n\n")}
+                    />
                   </div>
                 )}
               </motion.div>
